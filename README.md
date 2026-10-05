@@ -4,6 +4,8 @@ Aplicação web para o microempreendedor (MEI) registrar **entradas e saídas** 
 
 Projeto Integrado de Computação em Nuvem, ADS/UNIFEOB, 3º trimestre de 2026.
 
+**Aplicação no ar:** https://caderno-de-caixa-asri.onrender.com (acesso protegido por senha; `/health` é público)
+
 ## Rodar localmente (só precisa do Node.js 20 ou mais recente)
 
 ```bash
