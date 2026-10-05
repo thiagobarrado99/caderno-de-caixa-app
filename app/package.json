@@ -1,0 +1,13 @@
+{
+  "name": "caderno-de-caixa",
+  "version": "1.0.0",
+  "description": "Controle simples de entradas e saídas para MEI, hospedado em nuvem",
+  "main": "server.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage"
+  },
+  "license": "MIT"
+}

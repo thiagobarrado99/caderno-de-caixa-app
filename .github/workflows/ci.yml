@@ -1,0 +1,16 @@
+# Integração contínua: roda os testes e a cobertura a cada push/pull request.
+# A entrega contínua é feita pelo Render, que publica automaticamente a branch main.
+name: CI
+on: [push, pull_request]
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm run coverage

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caderno de Caixa</title>
+<style>
+  :root { --verde: #2e7d32; --vermelho: #c62828; --fundo: #f4f6f1; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: var(--fundo); color: #222; }
+  header { background: var(--verde); color: #fff; padding: 16px; text-align: center; }
+  header h1 { margin: 0; font-size: 1.5rem; }
+  header p { margin: 4px 0 0; opacity: .85; font-size: .9rem; }
+  main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .card { background: #fff; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 1px 3px #0002; }
+  .card small { display: block; color: #666; }
+  .card strong { font-size: 1.15rem; }
+  form { background: #fff; border-radius: 8px; padding: 12px; display: grid; gap: 8px;
+         grid-template-columns: 1.6fr 1fr .9fr 1.3fr auto; box-shadow: 0 1px 3px #0002; }
+  input, select, button { min-width: 0; padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; }
+  button { background: var(--verde); color: #fff; border: 0; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+  td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+  .entrada { color: var(--verde); } .saida { color: var(--vermelho); }
+  td button { background: none; color: #999; padding: 4px 8px; }
+  #erro { color: var(--vermelho); min-height: 1.2em; margin: 8px 0; }
+  @media (max-width: 600px) { form { grid-template-columns: 1fr 1fr; } form input[name=descricao] { grid-column: span 2; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>📒 Caderno de Caixa</h1>
+  <p>Controle de entradas e saídas do seu negócio — acessível de qualquer lugar</p>
+</header>
+<main>
+  <div class="cards">
+    <div class="card"><small>Entradas</small><strong class="entrada" id="entradas">R$ 0,00</strong></div>
+    <div class="card"><small>Saídas</small><strong class="saida" id="saidas">R$ 0,00</strong></div>
+    <div class="card"><small>Saldo</small><strong id="saldo">R$ 0,00</strong></div>
+  </div>
+  <form id="form">
+    <input name="descricao" placeholder="Descrição" required>
+    <select name="tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+    <input name="valor" type="number" step="0.01" min="0.01" placeholder="Valor" required>
+    <input name="data" type="date" required>
+    <button>Adicionar</button>
+  </form>
+  <p id="erro"></p>
+  <table>
+    <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th></th></tr></thead>
+    <tbody id="lista"></tbody>
+  </table>
+</main>
+<script>
+  const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const form = document.getElementById('form');
+  form.data.valueAsDate = new Date();
+
+  async function carregar() {
+    const { itens, resumo } = await (await fetch('/api/lancamentos')).json();
+    for (const k of ['entradas', 'saidas', 'saldo']) document.getElementById(k).textContent = brl(resumo[k]);
+    document.getElementById('lista').innerHTML = itens
+      .sort((a, b) => b.data.localeCompare(a.data))
+      .map((i) => `<tr>
+        <td>${i.data.split('-').reverse().join('/')}</td>
+        <td>${i.descricao.replace(/</g, '&lt;')}</td>
+        <td class="${i.tipo}">${i.tipo === 'saida' ? '−' : '+'} ${brl(i.valor)}</td>
+        <td><button onclick="remover('${i.id}')" title="Excluir">✕</button></td>
+      </tr>`).join('');
+  }
+
+  async function remover(id) {
+    await fetch('/api/lancamentos/' + id, { method: 'DELETE' });
+    carregar();
+  }
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const dados = Object.fromEntries(new FormData(form));
+    dados.valor = Number(dados.valor);
+    const r = await fetch('/api/lancamentos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados),
+    });
+    document.getElementById('erro').textContent = r.ok ? '' : (await r.json()).erro;
+    if (r.ok) { form.descricao.value = ''; form.valor.value = ''; carregar(); }
+  };
+
+  carregar();
+</script>
+</body>
+</html>
